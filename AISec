@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing Classifier Trainer</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>Phishing Classifier Trainer</h1>
+    <p>Train a simple AI model to classify phishing URLs directly in your browser.</p>
+    <button onclick="trainModel()">Train Model</button>
+    <div id="output"></div>
+
+    <script>
+        async function trainModel() {
+            const outputDiv = document.getElementById('output');
+            outputDiv.innerHTML = "Training the model...<br>";
+
+            // Mock data: Features and labels
+            // Features: [Length of URL, Contains "https", Contains special characters, Contains keywords like 'login']
+            const xs = tf.tensor2d([
+                [75, 1, 1, 1],  // Phishing example
+                [20, 1, 0, 0],  // Legit example
+                [90, 0, 1, 1],  // Phishing example
+                [15, 1, 0, 0],  // Legit example
+                [120, 0, 1, 1]  // Phishing example
+            ]);
+
+            // Labels: [1] for phishing, [0] for legit
+            const ys = tf.tensor2d([
+                [1],
+                [0],
+                [1],
+                [0],
+                [1]
+            ]);
+
+            // Define a simple neural network model
+            const model = tf.sequential();
+            model.add(tf.layers.dense({ units: 8, activation: 'relu', inputShape: [4] }));
+            model.add(tf.layers.dense({ units: 1, activation: 'sigmoid' }));
+
+            // Compile the model
+            model.compile({
+                optimizer: 'adam',
+                loss: 'binaryCrossentropy',
+                metrics: ['accuracy']
+            });
+
+            // Train the model
+            await model.fit(xs, ys, {
+                epochs: 50,
+                callbacks: {
+                    onEpochEnd: (epoch, logs) => {
+                        outputDiv.innerHTML += `Epoch ${epoch + 1}: Loss = ${logs.loss.toFixed(4)}, Accuracy = ${logs.acc.toFixed(4)}<br>`;
+                    }
+                }
+            });
+
+            outputDiv.innerHTML += "<br>Training complete! Model is ready for use.";
+
+            // Example prediction
+            const testUrl = tf.tensor2d([[65, 1, 0, 1]]); // Test input
+            const prediction = model.predict(testUrl);
+            prediction.array().then(value => {
+                outputDiv.innerHTML += `<br>Prediction for test input [65, 1, 0, 1]: ${value[0][0] > 0.5 ? 'Phishing' : 'Legit'}`;
+            });
+        }
+    </script>
+</body>
+</html>
